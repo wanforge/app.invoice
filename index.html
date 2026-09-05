@@ -98,28 +98,28 @@
   }
   .canvas-scaler-wrapper {
     width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
     display: flex;
     justify-content: center;
+    align-items: flex-start;
+    overflow: visible;
   }
   .paper-canvas {
     background: #ffffff;
     width: 210mm;
-    min-width: 210mm;
     min-height: 297mm;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     transform-origin: top center;
+    transition: transform 0.15s ease;
   }
   .paper-canvas iframe {
-    width: 100%;
+    width: 210mm;
     min-height: 297mm;
     border: none;
     display: block;
     background: #ffffff;
   }
   @media (max-width: 820px) {
-    body { padding: 10px 6px; }
+    body { padding: 8px 4px; }
     .viewer-toolbar { flex-direction: column; align-items: stretch; gap: 8px; }
     .toolbar-actions { justify-content: space-between; }
     .tab-btn, .print-btn { flex: 1; text-align: center; padding: 7px 4px; font-size: 9px; }
@@ -128,7 +128,7 @@
     body { padding: 0; background: #fff; }
     .viewer-toolbar { display: none !important; }
     .canvas-scaler-wrapper { display: block; overflow: visible; }
-    .paper-canvas { box-shadow: none !important; width: 100% !important; min-width: 0 !important; }
+    .paper-canvas { box-shadow: none !important; width: 100% !important; min-width: 0 !important; transform: none !important; margin-bottom: 0 !important; }
   }
 </style>
 </head>
@@ -226,13 +226,40 @@
     frame.contentWindow.document.write(html);
     frame.contentWindow.document.close();
 
-    // Auto fit height
+    // Auto fit height & scale dynamically to viewport
     setTimeout(() => {
       try {
-        const h = frame.contentWindow.document.body.scrollHeight;
-        if (h > 0) frame.style.height = h + 'px';
+        const docBody = frame.contentWindow.document.body;
+        const h = docBody.scrollHeight;
+        if (h > 0) frame.style.height = (h + 10) + 'px';
+        scaleCanvasToFit();
       } catch(_) {}
     }, 200);
+  }
+
+  function scaleCanvasToFit() {
+    const canvas = document.getElementById('canvas');
+    if (!canvas) return;
+    const isPrint = window.matchMedia('print').matches;
+    if (isPrint) {
+      canvas.style.transform = 'none';
+      canvas.style.marginBottom = '0px';
+      return;
+    }
+    const container = canvas.parentElement;
+    if (!container) return;
+    const containerWidth = container.clientWidth;
+    const a4WidthPx = 794; // Lebar standar 210mm pada layar 96dpi
+
+    if (containerWidth < a4WidthPx) {
+      const scale = (containerWidth - 6) / a4WidthPx;
+      canvas.style.transform = 'scale(' + scale + ')';
+      const originalHeight = canvas.offsetHeight || 1123;
+      canvas.style.marginBottom = -((1 - scale) * originalHeight) + 'px';
+    } else {
+      canvas.style.transform = 'none';
+      canvas.style.marginBottom = '0px';
+    }
   }
 
   function printDoc() {
@@ -298,6 +325,7 @@
     }
   }
 
+  window.addEventListener('resize', scaleCanvasToFit);
   window.addEventListener('DOMContentLoaded', initZeroKnowledgeVerification);
 </script>
 </body>
