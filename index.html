@@ -141,22 +141,18 @@
       <span>WANFORGE TECHNOLOGY</span>
     </div>
     <div class="toolbar-actions">
-      <div class="tab-group" id="tabGroup">
-        <button class="tab-btn active" id="btnInv" onclick="switchDoc('inv')">Faktur</button>
-        <button class="tab-btn" id="btnKwt" onclick="switchDoc('kwt')">Kwitansi</button>
-        <button class="tab-btn" id="btnPnw" onclick="switchDoc('pnw')">Penawaran</button>
-      </div>
       <button class="print-btn" onclick="printDoc()">Cetak A4</button>
     </div>
   </div>
 
-    <div class="canvas-scaler-wrapper"><div class="paper-canvas" id="canvas">
-    <div style="text-align:center; padding: 120px 20px; color:#a1a1aa;">
-      <h3 style="font-size:15px; color:#ffffff; margin-bottom:8px;">MEMVERIFIKASI DOKUMEN...</h3>
-      <p style="font-size:11px;">Mendekripsi lembar dokumen sah langsung di browser Anda.</p>
+  <div class="canvas-scaler-wrapper">
+    <div class="paper-canvas" id="canvas">
+      <div style="text-align:center; padding: 120px 20px; color:#a1a1aa;">
+        <h3 style="font-size:15px; color:#ffffff; margin-bottom:8px;">MEMVERIFIKASI DOKUMEN...</h3>
+        <p style="font-size:11px;">Mendekripsi lembar dokumen sah langsung di browser Anda.</p>
+      </div>
     </div>
   </div>
-</div>
 </div>
 
 <script>
@@ -204,20 +200,9 @@
     return JSON.parse(dec);
   }
 
-  function switchDoc(mode) {
-    ACTIVE_TAB = mode;
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    if (mode === 'inv') document.getElementById('btnInv').classList.add('active');
-    if (mode === 'kwt') document.getElementById('btnKwt').classList.add('active');
-    if (mode === 'pnw') document.getElementById('btnPnw').classList.add('active');
-    renderCurrentFrame();
-  }
-
   function renderCurrentFrame() {
     if (!CURRENT_PAYLOAD) return;
-    let html = CURRENT_PAYLOAD.invHtml;
-    if (ACTIVE_TAB === 'kwt') html = CURRENT_PAYLOAD.kwtHtml;
-    if (ACTIVE_TAB === 'pnw') html = CURRENT_PAYLOAD.pnwHtml;
+    const html = CURRENT_PAYLOAD.html;
 
     const canvas = document.getElementById('canvas');
     canvas.innerHTML = '<iframe id="docFrame"></iframe>';
@@ -294,13 +279,8 @@
 
       CURRENT_PAYLOAD = await decryptDocument(ciphertext.trim(), key.trim());
 
-      // Auto pilih tab jika ada parameter query
-      if (window.location.search.includes('type=kwt')) ACTIVE_TAB = 'kwt';
-      else if (window.location.search.includes('type=pnw')) ACTIVE_TAB = 'pnw';
-      else ACTIVE_TAB = 'inv';
-
       document.getElementById('toolbar').style.display = 'flex';
-      switchDoc(ACTIVE_TAB);
+      renderCurrentFrame();
     } catch (err) {
       document.getElementById('canvas').innerHTML = `
         <div style="text-align:center; padding:80px 20px; background:#ffffff; border:1px solid #000000; margin:40px auto; max-width:480px;">
